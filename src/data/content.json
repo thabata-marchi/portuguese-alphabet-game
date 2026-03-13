@@ -66,10 +66,66 @@
       "items": ["BA", "BE", "BI", "BO", "BU", "CA", "CO", "DA", "DE", "DO", "FA", "FE", "GA", "GO", "LA", "LE", "LI", "MA", "ME", "MI", "MO", "NA", "NE", "NI", "NO", "PA", "PE", "PI", "PO", "RA", "RE", "RI", "RO", "SA", "SE", "SI", "SO", "TA", "TE", "TI", "TO", "VA", "VE", "VI"],
       "prompts": {}
     },
+    "encontre_silabas": {
+      "title": "Sílabas",
+      "description": "Encontre as sílabas que formam a palavra!",
+      "wordsWithSyllables": [
+        { "word": "BOLA", "syllables": ["BO", "LA"] },
+        { "word": "CASA", "syllables": ["CA", "SA"] },
+        { "word": "DADO", "syllables": ["DA", "DO"] },
+        { "word": "FADA", "syllables": ["FA", "DA"] },
+        { "word": "GATO", "syllables": ["GA", "TO"] },
+        { "word": "LAGO", "syllables": ["LA", "GO"] },
+        { "word": "MAPA", "syllables": ["MA", "PA"] },
+        { "word": "NAVE", "syllables": ["NA", "VE"] },
+        { "word": "PATO", "syllables": ["PA", "TO"] },
+        { "word": "RATO", "syllables": ["RA", "TO"] },
+        { "word": "SAPO", "syllables": ["SA", "PO"] },
+        { "word": "TATU", "syllables": ["TA", "TU"] },
+        { "word": "VACA", "syllables": ["VA", "CA"] },
+        { "word": "LOBO", "syllables": ["LO", "BO"] },
+        { "word": "PIPA", "syllables": ["PI", "PA"] },
+        { "word": "RODA", "syllables": ["RO", "DA"] },
+        { "word": "MESA", "syllables": ["ME", "SA"] },
+        { "word": "LATA", "syllables": ["LA", "TA"] },
+        { "word": "BICO", "syllables": ["BI", "CO"] },
+        { "word": "FOGO", "syllables": ["FO", "GO"] },
+        { "word": "BANANA", "syllables": ["BA", "NA", "NA"] },
+        { "word": "AMORA", "syllables": ["A", "MO", "RA"] }
+      ],
+      "prompts": {}
+    },
     "palavras_simples": {
       "title": "Palavras",
       "description": "Leia as palavras!",
       "items": ["BOLA", "CASA", "DADO", "FADA", "GATO", "LAGO", "MAPA", "NAVE", "PATO", "RATO", "SAPO", "TATU", "VACA", "LOBO", "PIPA", "RODA", "MESA", "LATA", "BICO", "FOGO"],
+      "prompts": {}
+    },
+    "como_escreve": {
+      "title": "Como escreve?",
+      "description": "Selecione as sílabas na ordem e forme a palavra!",
+      "wordsWithSyllables": [
+        { "word": "BOLA", "syllables": ["BO", "LA"] },
+        { "word": "CASA", "syllables": ["CA", "SA"] },
+        { "word": "DADO", "syllables": ["DA", "DO"] },
+        { "word": "FADA", "syllables": ["FA", "DA"] },
+        { "word": "GATO", "syllables": ["GA", "TO"] },
+        { "word": "LAGO", "syllables": ["LA", "GO"] },
+        { "word": "MAPA", "syllables": ["MA", "PA"] },
+        { "word": "NAVE", "syllables": ["NA", "VE"] },
+        { "word": "PATO", "syllables": ["PA", "TO"] },
+        { "word": "RATO", "syllables": ["RA", "TO"] },
+        { "word": "SAPO", "syllables": ["SA", "PO"] },
+        { "word": "TATU", "syllables": ["TA", "TU"] },
+        { "word": "VACA", "syllables": ["VA", "CA"] },
+        { "word": "LOBO", "syllables": ["LO", "BO"] },
+        { "word": "PIPA", "syllables": ["PI", "PA"] },
+        { "word": "RODA", "syllables": ["RO", "DA"] },
+        { "word": "MESA", "syllables": ["ME", "SA"] },
+        { "word": "LATA", "syllables": ["LA", "TA"] },
+        { "word": "BICO", "syllables": ["BI", "CO"] },
+        { "word": "FOGO", "syllables": ["FO", "GO"] }
+      ],
       "prompts": {}
     }
   }

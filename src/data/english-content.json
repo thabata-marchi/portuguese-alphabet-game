@@ -1,0 +1,51 @@
+{
+  "_TODO": "Animals in development. Only colors active. See docs/english-animals-TODO.md to re-enable.",
+  "levels": {
+    "colors_basic": {
+      "title": "Colors",
+      "description": "What color is it?",
+      "optionType": "color",
+      "items": ["red", "blue", "green", "yellow", "purple"],
+      "colorMap": {
+        "red": "0xE74C3C",
+        "blue": "0x3498DB",
+        "green": "0x2ECC71",
+        "yellow": "0xF1C40F",
+        "purple": "0x9B59B6"
+      },
+      "prompts": {
+        "red": "What color is red?",
+        "blue": "What color is blue?",
+        "green": "What color is green?",
+        "yellow": "What color is yellow?",
+        "purple": "What color is purple?"
+      }
+    },
+    "colors_extended": {
+      "title": "More colors",
+      "description": "Find the color!",
+      "optionType": "color",
+      "items": ["red", "blue", "green", "yellow", "purple", "orange", "pink", "brown"],
+      "colorMap": {
+        "red": "0xE74C3C",
+        "blue": "0x3498DB",
+        "green": "0x2ECC71",
+        "yellow": "0xF1C40F",
+        "purple": "0x9B59B6",
+        "orange": "0xE67E22",
+        "pink": "0xFD79A8",
+        "brown": "0x795548"
+      },
+      "prompts": {
+        "red": "What color is red?",
+        "blue": "What color is blue?",
+        "green": "What color is green?",
+        "yellow": "What color is yellow?",
+        "purple": "What color is purple?",
+        "orange": "What color is orange?",
+        "pink": "What color is pink?",
+        "brown": "What color is brown?"
+      }
+    }
+  }
+}

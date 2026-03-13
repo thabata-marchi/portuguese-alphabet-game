@@ -6,6 +6,7 @@ export class Hud extends Container {
     super();
     this.stageWidth = stageWidth;
     this.stageHeight = stageHeight;
+    this.onBackToMenu = null;
     this._createElements();
   }
 
@@ -43,6 +44,7 @@ export class Hud extends Container {
 
     const smallFontSize = Math.max(14, Math.round(22 * scale));
     const levelFontSize = Math.max(12, Math.round(18 * scale));
+    const backBtnRadius = Math.max(18, 25 * scale);
     this.starsText = new Text({
       text: '⭐ 0',
       style: {
@@ -52,7 +54,7 @@ export class Hud extends Container {
         fontWeight: 'bold'
       }
     });
-    this.starsText.x = padding;
+    this.starsText.x = backBtnRadius * 2 + padding * 2;
     this.starsText.y = padding;
     this.addChild(this.starsText);
 
@@ -72,6 +74,14 @@ export class Hud extends Container {
     this.progressBar = new Graphics();
     this.progressBar.y = topBarHeight - 5;
     this.addChild(this.progressBar);
+
+    this.backButton = this._createBackButton(scale);
+    this.backButton.x = backBtnRadius + padding;
+    this.backButton.y = topBarHeight / 2;
+    this.backButton.on('pointerdown', () => {
+      if (this.onBackToMenu) this.onBackToMenu();
+    });
+    this.addChild(this.backButton);
 
     const micMargin = Math.max(24, 50 * scale);
     this.micButton = this._createMicButton(scale);
@@ -100,6 +110,41 @@ export class Hud extends Container {
     this.feedbackText.y = this.stageHeight / 2;
     this.feedbackText.visible = false;
     this.addChild(this.feedbackText);
+  }
+
+  _createBackButton(scale = 1) {
+    const btn = new Container();
+    btn.eventMode = 'static';
+    btn.cursor = 'pointer';
+
+    const radius = Math.max(18, 25 * scale);
+    const bg = new Graphics();
+    bg.circle(0, 0, radius);
+    bg.fill({ color: 0x3498DB, alpha: 0.9 });
+    bg.stroke({ color: 0xFFFFFF, width: 2, alpha: 0.6 });
+    btn.addChild(bg);
+
+    const iconSize = Math.max(18, 24 * scale);
+    const arrow = new Text({
+      text: '←',
+      style: {
+        fontFamily: 'Arial Rounded MT Bold, Arial',
+        fontSize: iconSize,
+        fontWeight: 'bold',
+        fill: 0xFFFFFF
+      }
+    });
+    arrow.anchor.set(0.5);
+    btn.addChild(arrow);
+
+    btn.on('pointerover', () => {
+      gsap.to(btn.scale, { x: 1.1, y: 1.1, duration: 0.15 });
+    });
+    btn.on('pointerout', () => {
+      gsap.to(btn.scale, { x: 1, y: 1, duration: 0.15 });
+    });
+
+    return btn;
   }
 
   _createMicButton(scale = 1) {

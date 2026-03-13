@@ -51,16 +51,28 @@
   },
   {
     "id": 6,
-    "title": "Sílabas",
-    "contentKey": "silabas_simples",
+    "title": "Sílabas I",
+    "contentKey": "encontre_silabas",
+    "showHyphens": true,
     "waves": 8,
-    "optionsCount": 4,
-    "speed": 4,
-    "time": 12,
+    "optionsCount": 6,
+    "speed": 3,
+    "time": 18,
     "pointsPerCorrect": 25
   },
   {
     "id": 7,
+    "title": "Sílabas II",
+    "contentKey": "encontre_silabas",
+    "showHyphens": false,
+    "waves": 8,
+    "optionsCount": 6,
+    "speed": 3,
+    "time": 18,
+    "pointsPerCorrect": 25
+  },
+  {
+    "id": 8,
     "title": "Palavras",
     "contentKey": "palavras_simples",
     "waves": 10,
@@ -68,5 +80,15 @@
     "speed": 3,
     "time": 15,
     "pointsPerCorrect": 30
+  },
+  {
+    "id": 9,
+    "title": "Como escreve?",
+    "contentKey": "como_escreve",
+    "waves": 10,
+    "optionsCount": 6,
+    "speed": 3,
+    "time": 20,
+    "pointsPerCorrect": 35
   }
 ]

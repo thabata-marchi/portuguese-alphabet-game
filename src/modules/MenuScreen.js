@@ -9,8 +9,12 @@ export class MenuScreen extends Container {
     this.stageHeight = stageHeight;
     this.sound = sound;
 
-    this.onPlay = null;
+    this.onPlayVogais = null;
+    this.onPlayConsoantes = null;
+    this.onPlaySilabas = null;
+    this.onPlaySilabas2 = null;
     this.onPlayMath = null;
+    this.onPlayEnglish = null;
     this.onActivateVoice = null;
 
     this._create();
@@ -90,17 +94,49 @@ export class MenuScreen extends Container {
     subtitle.y = subtitleY;
     this.addChild(subtitle);
 
-    const playY = this.stageHeight * 0.52;
-    const mathY = this.stageHeight * 0.62;
-    const micY = this.stageHeight * 0.72;
-    const playBtn = this._createButton('🎮 Jogar!', this.stageWidth / 2, playY, 0x27AE60, scale);
-    playBtn.on('pointerdown', async () => {
+    const vogaisY = this.stageHeight * 0.46;
+    const consoantesY = this.stageHeight * 0.53;
+    const silabasY = this.stageHeight * 0.60;
+    const silabas2Y = this.stageHeight * 0.67;
+    const mathY = this.stageHeight * 0.74;
+    const englishY = this.stageHeight * 0.81;
+    const micY = this.stageHeight * 0.88;
+
+    const vogaisBtn = this._createButton('🔤 Vogais', this.stageWidth / 2, vogaisY, 0x27AE60, scale);
+    vogaisBtn.on('pointerdown', async () => {
       await this.sound.unlock();
       this.sound.play('click');
       gsap.killTweensOf(this.title.scale);
-      if (this.onPlay) this.onPlay();
+      if (this.onPlayVogais) this.onPlayVogais();
     });
-    this.addChild(playBtn);
+    this.addChild(vogaisBtn);
+
+    const consoantesBtn = this._createButton('📝 Consoantes', this.stageWidth / 2, consoantesY, 0x16A085, scale);
+    consoantesBtn.on('pointerdown', async () => {
+      await this.sound.unlock();
+      this.sound.play('click');
+      gsap.killTweensOf(this.title.scale);
+      if (this.onPlayConsoantes) this.onPlayConsoantes();
+    });
+    this.addChild(consoantesBtn);
+
+    const silabasBtn = this._createButton('📖 Sílabas I', this.stageWidth / 2, silabasY, 0x1ABC9C, scale);
+    silabasBtn.on('pointerdown', async () => {
+      await this.sound.unlock();
+      this.sound.play('click');
+      gsap.killTweensOf(this.title.scale);
+      if (this.onPlaySilabas) this.onPlaySilabas();
+    });
+    this.addChild(silabasBtn);
+
+    const silabas2Btn = this._createButton('📖 Sílabas II', this.stageWidth / 2, silabas2Y, 0x16A085, scale * 0.9);
+    silabas2Btn.on('pointerdown', async () => {
+      await this.sound.unlock();
+      this.sound.play('click');
+      gsap.killTweensOf(this.title.scale);
+      if (this.onPlaySilabas2) this.onPlaySilabas2();
+    });
+    this.addChild(silabas2Btn);
 
     const mathBtn = this._createButton('🔢 Matemática', this.stageWidth / 2, mathY, 0x9B59B6, scale);
     mathBtn.on('pointerdown', async () => {
@@ -111,7 +147,16 @@ export class MenuScreen extends Container {
     });
     this.addChild(mathBtn);
 
-    this.micBtn = this._createButton('🎤 Ativar Voz', this.stageWidth / 2, micY, 0xE74C3C, scale);
+    const englishBtn = this._createButton('🇬🇧 English', this.stageWidth / 2, englishY, 0x2980B9, scale * 0.9);
+    englishBtn.on('pointerdown', async () => {
+      await this.sound.unlock();
+      this.sound.play('click');
+      gsap.killTweensOf(this.title.scale);
+      if (this.onPlayEnglish) this.onPlayEnglish();
+    });
+    this.addChild(englishBtn);
+
+    this.micBtn = this._createButton('🎤 Ativar Voz', this.stageWidth / 2, micY, 0xE74C3C, scale * 0.85);
     this.micBtn.on('pointerdown', async () => {
       await this.sound.unlock();
       this.sound.play('click');

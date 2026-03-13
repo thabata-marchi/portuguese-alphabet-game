@@ -5,7 +5,6 @@ import { Mascot } from './Mascot';
 import { MenuScreen } from './MenuScreen';
 import { GameOverScreen } from './GameOverScreen';
 import levelsData from '../data/levels.json';
-import mathLevelsData from '../data/math-levels.json';
 
 const GAME_STATES = {
   MENU: 'menu',
@@ -16,7 +15,7 @@ const GAME_STATES = {
 };
 
 export class Game {
-  constructor(app, stageWidth, stageHeight, { sound, questionManager, difficultyManager, mathQuestionManager }) {
+  constructor(app, stageWidth, stageHeight, { sound, questionManager, difficultyManager, mathQuestionManager, englishQuestionManager }) {
     this.app = app;
     this.stageWidth = stageWidth;
     this.stageHeight = stageHeight;
@@ -25,10 +24,14 @@ export class Game {
     this.sound = sound;
     this.questionManager = questionManager;
     this.difficultyManager = difficultyManager;
-    this.mathQuestionManager = mathQuestionManager;
+    this.mathQuestionManager = mathQuestionManager ?? null;
+    this.englishQuestionManager = englishQuestionManager ?? null;
+    this._mathLevelsData = null;
+    this._englishLevelsData = null;
     this.speechRecognizer = null;
 
     this.gameMode = 'letters';
+    this.lettersLevelRange = null; // [start, end] ou null = todos os níveis
     this.currentLevel = 0;
     this.currentWave = 0;
     this.stars = 0;
@@ -39,6 +42,26 @@ export class Game {
 
   async start() {
     this._showMenu();
+  }
+
+  async _ensureMathLoaded() {
+    if (this._mathLevelsData) return;
+    const [mathMod, mathData] = await Promise.all([
+      import('./MathQuestionManager'),
+      import('../data/math-levels.json')
+    ]);
+    this.mathQuestionManager = new mathMod.MathQuestionManager();
+    this._mathLevelsData = mathData.default;
+  }
+
+  async _ensureEnglishLoaded() {
+    if (this._englishLevelsData) return;
+    const [engMod, engData] = await Promise.all([
+      import('./EnglishQuestionManager'),
+      import('../data/english-levels.json')
+    ]);
+    this.englishQuestionManager = new engMod.EnglishQuestionManager();
+    this._englishLevelsData = engData.default;
   }
 
   async _initSpeech() {
@@ -61,14 +84,40 @@ export class Game {
     this.app.stage.removeChildren();
 
     const menu = new MenuScreen(this.stageWidth, this.stageHeight, this.sound);
-    menu.onPlay = async () => {
+    menu.onPlayVogais = async () => {
       await this.sound.unlock();
       this.gameMode = 'letters';
+      this.lettersLevelRange = [0, 0];
+      this._startLevel(0);
+    };
+    menu.onPlayConsoantes = async () => {
+      await this.sound.unlock();
+      this.gameMode = 'letters';
+      this.lettersLevelRange = [1, 4];
+      this._startLevel(0);
+    };
+    menu.onPlaySilabas = async () => {
+      await this.sound.unlock();
+      this.gameMode = 'letters';
+      this.lettersLevelRange = [5, 5];
+      this._startLevel(0);
+    };
+    menu.onPlaySilabas2 = async () => {
+      await this.sound.unlock();
+      this.gameMode = 'letters';
+      this.lettersLevelRange = [6, 6];
       this._startLevel(0);
     };
     menu.onPlayMath = async () => {
       await this.sound.unlock();
       this.gameMode = 'math';
+      await this._ensureMathLoaded();
+      this._startLevel(0);
+    };
+    menu.onPlayEnglish = async () => {
+      await this.sound.unlock();
+      this.gameMode = 'english';
+      await this._ensureEnglishLoaded();
       this._startLevel(0);
     };
     menu.onActivateVoice = async () => {
@@ -91,7 +140,16 @@ export class Game {
     this.currentLevel = levelIndex;
     this.currentWave = 0;
 
-    const levels = this.gameMode === 'math' ? mathLevelsData : levelsData;
+    let levels;
+    if (this.gameMode === 'math') {
+      levels = this._mathLevelsData;
+    } else if (this.gameMode === 'english') {
+      levels = this._englishLevelsData;
+    } else {
+      levels = this.lettersLevelRange
+        ? levelsData.slice(this.lettersLevelRange[0], this.lettersLevelRange[1] + 1)
+        : levelsData;
+    }
     const level = levels[this.currentLevel];
     if (!level) {
       this._showGameOver(true);
@@ -100,6 +158,10 @@ export class Game {
 
     if (this.gameMode === 'letters') {
       this.questionManager.setContent(level.contentKey);
+      this.difficultyManager.resetForLevel(levelIndex);
+    }
+    if (this.gameMode === 'english') {
+      this.englishQuestionManager.setContent(level.contentKey);
       this.difficultyManager.resetForLevel(levelIndex);
     }
 
@@ -116,7 +178,14 @@ export class Game {
     this.hud.setProgress(0, level.waves);
     if (this.speechRecognizer?.isListening) this.hud.setMicActive(true);
     this.hud.micButton.visible = this.gameMode === 'letters';
+    this.hud.micButton.eventMode = this.gameMode === 'letters' ? 'static' : 'none';
+    this.hud.micButton.cursor = this.gameMode === 'letters' ? 'pointer' : 'default';
     this.hud.micButton.on('pointerdown', () => this._toggleMic());
+    this.hud.onBackToMenu = () => {
+      this._clearWaveTimer();
+      this.speechRecognizer?.stop();
+      this._showMenu();
+    };
     this.app.stage.addChild(this.hud);
 
     const mascotScale = Math.min(0.8, 0.5 + (this.stageWidth / 800) * 0.3);
@@ -132,7 +201,10 @@ export class Game {
     // Show level title
     this.state = GAME_STATES.WAVE_TRANSITION;
     this.hud.showFeedback(`${level.title}`, 0xFFD700);
-    this.sound.speakText(`Nível ${level.id}: ${level.title}`);
+    const levelTitleSpeech = this.gameMode === 'english'
+      ? `Level ${level.id}: ${level.title}`
+      : `Nível ${level.id}: ${level.title}`;
+    this.sound.speakText(levelTitleSpeech);
 
     gsap.delayedCall(2, () => {
       this._startWave();
@@ -140,7 +212,16 @@ export class Game {
   }
 
   _startWave() {
-    const levels = this.gameMode === 'math' ? mathLevelsData : levelsData;
+    let levels;
+    if (this.gameMode === 'math') {
+      levels = this._mathLevelsData;
+    } else if (this.gameMode === 'english') {
+      levels = this._englishLevelsData;
+    } else {
+      levels = this.lettersLevelRange
+        ? levelsData.slice(this.lettersLevelRange[0], this.lettersLevelRange[1] + 1)
+        : levelsData;
+    }
     const level = levels[this.currentLevel];
     if (this.currentWave >= level.waves) {
       this._levelComplete();
@@ -152,7 +233,7 @@ export class Game {
     this.waveStartTime = Date.now();
     this.difficultyManager.setAttempts(0);
 
-    const params = this.gameMode === 'math'
+    const params = this.gameMode === 'math' || this.gameMode === 'english'
       ? { optionsCount: level.optionsCount, speed: level.speed, time: level.time }
       : this.difficultyManager.gameParams;
 
@@ -162,6 +243,44 @@ export class Game {
       this.hud.setProgress(this.currentWave, level.waves);
       this.sound.speakText(question.prompt);
       this.stage.showLetters(question, params.speed);
+      this._clearWaveTimer();
+      this.waveTimer = gsap.delayedCall(params.time, () => this._waveTimeout());
+      return;
+    }
+
+    if (this.gameMode === 'english') {
+      const question = this.englishQuestionManager.generateQuestion(params.optionsCount);
+      if (!question) return;
+      this.hud.setQuestion(question.prompt);
+      this.hud.setProgress(this.currentWave, level.waves);
+      this.sound.speakText(question.prompt);
+      this.stage.showLetters(question, params.speed);
+      this._clearWaveTimer();
+      this.waveTimer = gsap.delayedCall(params.time, () => this._waveTimeout());
+      return;
+    }
+
+    if (this.questionManager.isEncontreSilabasGame()) {
+      const question = this.questionManager.generateEncontreSilabasQuestion(level.optionsCount);
+      if (!question) return;
+      this.hud.setQuestion(question.prompt);
+      this.hud.setProgress(this.currentWave, level.waves);
+      this.sound.speakText(question.prompt);
+      // Sílabas I = com hífen (BO-LA); Sílabas II (id 7) = sem hífen (BOLA)
+      const showHyphens = level.showHyphens === true;
+      this.stage.showEncontreSilabasGame(question, params.speed, showHyphens);
+      this._clearWaveTimer();
+      this.waveTimer = gsap.delayedCall(params.time, () => this._waveTimeout());
+      return;
+    }
+
+    if (this.questionManager.isSyllableGame()) {
+      const question = this.questionManager.generateSyllableQuestion(level.optionsCount);
+      if (!question) return;
+      this.hud.setQuestion(question.prompt);
+      this.hud.setProgress(this.currentWave, level.waves);
+      this.sound.speakText(question.prompt);
+      this.stage.showWordSyllableGame(question, params.speed);
       this._clearWaveTimer();
       this.waveTimer = gsap.delayedCall(params.time, () => this._waveTimeout());
       return;
@@ -200,7 +319,8 @@ export class Game {
   _handleVoiceWaveComplete() {
     this.stars++;
     this.hud.setStars(this.stars);
-    this.hud.showFeedback('Muito bem! ⭐', 0x2ECC71);
+    const feedbackMsg = this.gameMode === 'english' ? 'Well done! ⭐' : 'Muito bem! ⭐';
+    this.hud.showFeedback(feedbackMsg, 0x2ECC71);
     this.mascot.celebrate();
 
     gsap.delayedCall(1.5, () => {
@@ -218,7 +338,8 @@ export class Game {
 
       this.stars++;
       this.hud.setStars(this.stars);
-      this.hud.showFeedback('Muito bem! ⭐', 0x2ECC71);
+      const feedbackMsg = this.gameMode === 'english' ? 'Well done! ⭐' : 'Muito bem! ⭐';
+      this.hud.showFeedback(feedbackMsg, 0x2ECC71);
       this.mascot.celebrate();
       this.difficultyManager.recordCorrect(responseTime);
 
@@ -234,14 +355,16 @@ export class Game {
 
       if (this.attempts >= 2) {
         this.stage.showHint();
-        this.hud.showFeedback('Olha a dica!', 0xF39C12);
+        const hintMsg = this.gameMode === 'english' ? 'Look at the hint!' : 'Olha a dica!';
+        this.hud.showFeedback(hintMsg, 0xF39C12);
       }
     }
   }
 
   _waveTimeout() {
     this.stage.showHint();
-    this.hud.showFeedback('Tempo!', 0xE74C3C);
+    const timeoutMsg = this.gameMode === 'english' ? 'Time\'s up!' : 'Tempo!';
+    this.hud.showFeedback(timeoutMsg, 0xE74C3C);
     this.mascot.encourage();
     this.difficultyManager.recordTimeout();
 
@@ -255,12 +378,25 @@ export class Game {
     this.state = GAME_STATES.LEVEL_COMPLETE;
     this.stage.clearLetters();
 
-    const levels = this.gameMode === 'math' ? mathLevelsData : levelsData;
+    let levels;
+    if (this.gameMode === 'math') {
+      levels = this._mathLevelsData;
+    } else if (this.gameMode === 'english') {
+      levels = this._englishLevelsData;
+    } else {
+      levels = this.lettersLevelRange
+        ? levelsData.slice(this.lettersLevelRange[0], this.lettersLevelRange[1] + 1)
+        : levelsData;
+    }
     const level = levels[this.currentLevel];
 
     this.sound.play('levelUp');
-    this.hud.showFeedback(`${level.title} Completo!`, 0xFFD700);
-    this.sound.speakText(`Parabéns! Você completou ${level.title}!`);
+    const completeMsg = this.gameMode === 'english' ? `${level.title} complete!` : `${level.title} Completo!`;
+    this.hud.showFeedback(completeMsg, 0xFFD700);
+    const speakMsg = this.gameMode === 'english'
+      ? `Well done! You completed ${level.title}!`
+      : `Parabéns! Você completou ${level.title}!`;
+    this.sound.speakText(speakMsg);
     this.mascot.celebrate();
     this.difficultyManager.recordLevelComplete();
 

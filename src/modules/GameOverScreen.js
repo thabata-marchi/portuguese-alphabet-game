@@ -62,7 +62,7 @@ export class GameOverScreen extends Container {
     });
     this.addChild(replayBtn);
 
-    const menuBtn = this._createButton('🏠 Menu', this.stageWidth / 2, menuY, 0x3498DB, scale);
+    const menuBtn = this._createButton('🏠 Voltar ao início', this.stageWidth / 2, menuY, 0x3498DB, scale);
     menuBtn.on('pointerdown', () => {
       if (this.onMenu) this.onMenu();
     });
