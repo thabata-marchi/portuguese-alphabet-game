@@ -156,9 +156,8 @@ export class Stage extends Container {
       );
       if (matchingLetter) {
         this.lettersSpoken.add(key);
-        this.sound.play('correct');
-        this.sound.play('star');
-        matchingLetter.correct();
+        this.sound.play('pop');
+        matchingLetter.pop();
         if (this.lettersSpoken.size >= this.letters.length && this.onAllLettersSpoken) {
           this.onAllLettersSpoken();
         }

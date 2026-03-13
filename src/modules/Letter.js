@@ -183,6 +183,36 @@ export class Letter extends Character {
     });
   }
 
+  /**
+   * Animação de balão estourando (modo voz: ao falar a letra).
+   */
+  pop() {
+    this.isClickable = false;
+    this.setState('correct');
+    this.killTimeline();
+    gsap.killTweensOf(this);
+    gsap.killTweensOf(this.scale);
+    gsap.killTweensOf(this.balloon);
+
+    // Estouro: aumenta rápido e some
+    gsap.to(this.scale, {
+      x: 1.8,
+      y: 1.8,
+      duration: 0.12,
+      ease: 'power2.out'
+    });
+    gsap.to(this.balloon, {
+      alpha: 0,
+      duration: 0.1
+    });
+    gsap.to(this, {
+      alpha: 0,
+      duration: 0.15,
+      delay: 0.08,
+      ease: 'power2.in'
+    });
+  }
+
   wrong() {
     if (!this.isClickable) return;
 

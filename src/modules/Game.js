@@ -150,10 +150,14 @@ export class Game {
       this.sound.speakText('Fale todas as letras!');
       this.stage.showLettersForVoice(voiceData.letters, params.speed);
 
-      if (!this.speechRecognizer.isListening) {
-        this.speechRecognizer.start();
-        this.hud.setMicActive(true);
-      }
+      // Sempre reiniciar o microfone na rodada (navegador pode ter parado no onend)
+      this.speechRecognizer.stop();
+      setTimeout(() => {
+        if (this.speechRecognizer && this.state === GAME_STATES.PLAYING) {
+          this.speechRecognizer.start();
+          this.hud.setMicActive(true);
+        }
+      }, 120);
       // Sem timer no modo voz
     } else {
       // Modo normal: encontre uma letra (clique)

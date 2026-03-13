@@ -3,25 +3,30 @@ export class Sound {
     this.muted = false;
     this.voice = null;
     this._unlocked = false;
-    this._initSounds();
+    this.audioContext = null; // criado no primeiro clique (exigência Safari/iOS)
+    this._initSoundEffects();
     this._loadVoice();
   }
 
   /**
    * Desbloqueia áudio no primeiro clique (exigência dos navegadores).
-   * Chamar em resposta a um gesto do usuário (ex.: clique em botão).
+   * Em Safari/iOS o AudioContext precisa ser CRIADO no gesto, não só resumed.
    * @returns {Promise<void>}
    */
   async unlock() {
     if (this._unlocked) return;
     this._unlocked = true;
-    if (this.audioContext?.state === 'suspended') {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    if (!this.audioContext) {
+      this.audioContext = new Ctx();
+    }
+    if (this.audioContext.state === 'suspended') {
       await this.audioContext.resume().catch(() => {});
     }
   }
 
-  _initSounds() {
-    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  _initSoundEffects() {
 
     this.soundEffects = {
       correct:  { frequencies: [523, 659, 784],  duration: 0.15, type: 'sine' },
@@ -53,8 +58,8 @@ export class Sound {
   }
 
   play(name) {
-    this.unlock();
     if (this.muted) return;
+    if (!this.audioContext) return; // só toca depois de unlock() no clique
 
     const effect = this.soundEffects[name];
     if (!effect) return;
@@ -103,7 +108,6 @@ export class Sound {
   }
 
   speakText(text) {
-    this.unlock();
     if (this.muted) return;
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'pt-BR';

@@ -15,20 +15,24 @@ export class SpeechRecognizer {
   }
 
   async init() {
-    // Try TensorFlow.js Speech Commands first (precisa registrar o backend antes)
+    // Preferir Web Speech API: reconhece letras em pt-BR ("A", "B", "C").
+    // TF.js Speech Commands só tem ~20 palavras em inglês (yes, no, up...) e não reconhece letras.
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      if (this._initWebSpeechAPI()) {
+        console.log('Voice: Web Speech API (pt-BR, letras)');
+        return true;
+      }
+    }
     try {
       await import('@tensorflow/tfjs');
       const speechCommands = await import('@tensorflow-models/speech-commands');
-
       this.recognizer = speechCommands.create('BROWSER_FFT');
       await this.recognizer.ensureModelLoaded();
-
-      console.log('TF.js Speech Commands loaded');
-      console.log('Recognized words:', this.recognizer.wordLabels());
+      console.log('Voice: TF.js Speech Commands (palavras em inglês)');
       return true;
     } catch (e) {
-      console.warn('TF.js Speech Commands not available, using Web Speech API:', e.message);
-      return this._initWebSpeechAPI();
+      console.warn('Voice recognition not available:', e.message);
+      return false;
     }
   }
 
@@ -62,12 +66,12 @@ export class SpeechRecognizer {
       };
 
       this.webRecognizer.onend = () => {
-        // Restart if still listening
+        // Navegador parou (ex.: silêncio). Reinicia se ainda queremos ouvir.
         if (this.isListening) {
           try {
             this.webRecognizer.start();
           } catch (e) {
-            // Ignore already running error
+            this.isListening = false; // falhou; próxima rodada fará stop+start
           }
         }
       };
@@ -81,18 +85,18 @@ export class SpeechRecognizer {
   }
 
   _extractLetter(transcript) {
-    // Remove spaces and get the first significant letter
-    const cleaned = transcript.replace(/[^A-Z]/g, '');
+    // Normaliza acentos (á→a, ç→c) para comparar com as letras do jogo
+    const normalized = transcript
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase();
+    const cleaned = normalized.replace(/[^A-Z]/g, '');
 
     if (cleaned.length === 0) return null;
 
-    // If only one letter was spoken
     if (cleaned.length === 1) return cleaned;
-
-    // If a syllable was spoken (2 letters)
     if (cleaned.length === 2) return cleaned;
 
-    // If a word was spoken, return it whole (for word mode)
     return cleaned;
   }
 
