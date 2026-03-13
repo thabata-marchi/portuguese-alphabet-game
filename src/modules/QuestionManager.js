@@ -49,6 +49,25 @@ export class QuestionManager {
     };
   }
 
+  /**
+   * Gera uma lista de letras para o modo "Fale todas as letras" (voz ativada).
+   * Só usa itens de uma letra (níveis de sílabas/palavras ficam no modo normal).
+   * @param {number} count - Quantidade de letras a mostrar
+   * @returns {{ letters: string[] } | null}
+   */
+  generateLettersForVoice(count) {
+    const levelContent = this.content[this.currentContentKey];
+    if (!levelContent?.items?.length) return null;
+
+    const singleLetters = levelContent.items.filter((item) => item.length === 1);
+    if (singleLetters.length === 0) return null;
+
+    const shuffled = shuffleArray([...singleLetters]);
+    const letters = shuffled.slice(0, Math.min(count, singleLetters.length));
+
+    return { letters };
+  }
+
   getContentTitle() {
     const levelContent = this.content[this.currentContentKey];
     return levelContent ? levelContent.title : '';

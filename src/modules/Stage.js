@@ -11,7 +11,10 @@ export class Stage extends Container {
     this.sound = sound;
     this.letters = [];
     this.currentQuestion = null;
+    this.voiceMode = false; // modo "fale todas as letras"
+    this.lettersSpoken = new Set(); // letras já ditas no modo voz
     this.onAnswer = null; // callback: (isCorrect, letter) => {}
+    this.onAllLettersSpoken = null; // callback quando todas as letras forem ditas (modo voz)
 
     this._createBackground();
   }
@@ -23,11 +26,12 @@ export class Stage extends Container {
     sky.fill({ color: 0x87CEEB });
     this.addChild(sky);
 
-    // Decorative clouds
+    const cloudYMin = this.stageHeight * 0.13;
+    const cloudYMax = this.stageHeight * 0.33;
     for (let i = 0; i < 4; i++) {
       const cloud = this._createCloud();
-      cloud.x = randomBetween(50, this.stageWidth - 50);
-      cloud.y = randomBetween(80, 200);
+      cloud.x = randomBetween(this.stageWidth * 0.06, this.stageWidth - this.stageWidth * 0.06);
+      cloud.y = randomBetween(cloudYMin, cloudYMax);
       cloud.alpha = 0.6;
       this.addChild(cloud);
 
@@ -41,19 +45,19 @@ export class Stage extends Container {
       });
     }
 
-    // Grass at the bottom
+    const grassHeight = Math.max(50, this.stageHeight * 0.13);
     const grass = new Graphics();
-    grass.rect(0, this.stageHeight - 80, this.stageWidth, 80);
+    grass.rect(0, this.stageHeight - grassHeight, this.stageWidth, grassHeight);
     grass.fill({ color: 0x27AE60 });
     this.addChild(grass);
 
-    // Grass details
+    const grassStep = Math.max(12, this.stageWidth * 0.025);
     const grassDetail = new Graphics();
-    for (let x = 0; x < this.stageWidth; x += 20) {
+    for (let x = 0; x < this.stageWidth; x += grassStep) {
       const h = randomBetween(10, 30);
-      grassDetail.moveTo(x, this.stageHeight - 80);
-      grassDetail.lineTo(x + 5, this.stageHeight - 80 - h);
-      grassDetail.lineTo(x + 10, this.stageHeight - 80);
+      grassDetail.moveTo(x, this.stageHeight - grassHeight);
+      grassDetail.lineTo(x + 5, this.stageHeight - grassHeight - h);
+      grassDetail.lineTo(x + 10, this.stageHeight - grassHeight);
     }
     grassDetail.stroke({ color: 0x2ECC71, width: 2 });
     this.addChild(grassDetail);
@@ -72,6 +76,7 @@ export class Stage extends Container {
   showLetters(question, speed) {
     this.clearLetters();
     this.currentQuestion = question;
+    this.voiceMode = false;
 
     const { options, correctAnswer } = question;
     const spacing = this.stageWidth / (options.length + 1);
@@ -81,16 +86,44 @@ export class Stage extends Container {
       letter.isCorrect = (letterText === correctAnswer);
       letter.setSpeed(speed);
 
-      // Distributed initial position
       const startX = spacing * (index + 1);
-      const startY = randomBetween(120, 400);
+      const startY = randomBetween(this.stageHeight * 0.2, this.stageHeight * 0.67);
 
       letter.on('pointerdown', () => this._onLetterClick(letter));
 
       this.addChild(letter);
       this.letters.push(letter);
 
-      // Spawn with staggered delay
+      gsap.delayedCall(index * 0.2, () => {
+        letter.spawn(startX, startY);
+      });
+    });
+  }
+
+  /**
+   * Modo voz: mostra as letras na tela para a criança falar todas (sem clicar).
+   */
+  showLettersForVoice(letters, speed) {
+    this.clearLetters();
+    this.voiceMode = true;
+    this.lettersSpoken.clear();
+    this.currentQuestion = { letters };
+
+    const spacing = this.stageWidth / (letters.length + 1);
+
+    letters.forEach((letterText, index) => {
+      const letter = new Letter(letterText, this.stageWidth, this.stageHeight);
+      letter.isCorrect = true; // todas são "corretas" quando ditas
+      letter.setSpeed(speed);
+      letter.eventMode = 'none'; // não clicável no modo voz
+      letter.cursor = 'default';
+
+      const startX = spacing * (index + 1);
+      const startY = randomBetween(this.stageHeight * 0.2, this.stageHeight * 0.67);
+
+      this.addChild(letter);
+      this.letters.push(letter);
+
       gsap.delayedCall(index * 0.2, () => {
         letter.spawn(startX, startY);
       });
@@ -115,10 +148,28 @@ export class Stage extends Container {
   }
 
   handleVoiceAnswer(spokenLetter) {
-    const matchingLetter = this.letters.find(
-      l => l.letter.toUpperCase() === spokenLetter.toUpperCase() && l.isClickable
-    );
+    const key = spokenLetter.toUpperCase();
 
+    if (this.voiceMode) {
+      const matchingLetter = this.letters.find(
+        l => l.letter.toUpperCase() === key && !this.lettersSpoken.has(l.letter.toUpperCase())
+      );
+      if (matchingLetter) {
+        this.lettersSpoken.add(key);
+        this.sound.play('correct');
+        this.sound.play('star');
+        matchingLetter.correct();
+        if (this.lettersSpoken.size >= this.letters.length && this.onAllLettersSpoken) {
+          this.onAllLettersSpoken();
+        }
+        return true;
+      }
+      return false;
+    }
+
+    const matchingLetter = this.letters.find(
+      l => l.letter.toUpperCase() === key && l.isClickable
+    );
     if (matchingLetter) {
       this._onLetterClick(matchingLetter);
       return true;
@@ -141,6 +192,8 @@ export class Stage extends Container {
     });
     this.letters = [];
     this.currentQuestion = null;
+    this.voiceMode = false;
+    this.lettersSpoken.clear();
   }
 
   areAllLettersGone() {

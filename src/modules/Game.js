@@ -58,10 +58,15 @@ export class Game {
     this.app.stage.removeChildren();
 
     const menu = new MenuScreen(this.stageWidth, this.stageHeight, this.sound);
-    menu.onPlay = () => this._startLevel(0);
+    menu.onPlay = async () => {
+      await this.sound.unlock();
+      this._startLevel(0);
+    };
     menu.onActivateVoice = async () => {
+      await this.sound.unlock();
       await this._initSpeech();
       if (this.speechRecognizer) {
+        this.speechRecognizer.start();
         menu.setVoiceActivated();
       }
     };
@@ -86,6 +91,7 @@ export class Game {
     // Create the game stage
     this.stage = new Stage(this.stageWidth, this.stageHeight, this.sound);
     this.stage.onAnswer = (isCorrect, letter) => this._handleAnswer(isCorrect, letter);
+    this.stage.onAllLettersSpoken = () => this._handleVoiceWaveComplete();
     this.app.stage.addChild(this.stage);
 
     // Create the HUD
@@ -93,14 +99,17 @@ export class Game {
     this.hud.setStars(this.stars);
     this.hud.setLevel(level.id, level.title);
     this.hud.setProgress(0, level.waves);
+    if (this.speechRecognizer?.isListening) this.hud.setMicActive(true);
     this.hud.micButton.on('pointerdown', () => this._toggleMic());
     this.app.stage.addChild(this.hud);
 
-    // Mascot
+    const mascotScale = Math.min(0.8, 0.5 + (this.stageWidth / 800) * 0.3);
+    const mascotMarginX = Math.max(40, this.stageWidth * 0.075);
+    const mascotMarginY = Math.max(60, this.stageHeight * 0.17);
     this.mascot = new Mascot();
-    this.mascot.x = 60;
-    this.mascot.y = this.stageHeight - 100;
-    this.mascot.scale.set(0.8);
+    this.mascot.x = mascotMarginX;
+    this.mascot.y = this.stageHeight - mascotMarginY;
+    this.mascot.scale.set(mascotScale);
     this.mascot.idle();
     this.app.stage.addChild(this.mascot);
 
@@ -127,17 +136,51 @@ export class Game {
     this.difficultyManager.setAttempts(0);
 
     const params = this.difficultyManager.gameParams;
-    const question = this.questionManager.generateQuestion(params.optionsCount);
-    if (!question) return;
 
-    this.hud.setQuestion(question.prompt);
-    this.hud.setProgress(this.currentWave, level.waves);
-    this.sound.speakText(question.prompt);
-    this.stage.showLetters(question, params.speed);
+    const voiceData =
+      this.speechRecognizer &&
+      this.questionManager.generateLettersForVoice(
+        Math.min(5, Math.max(3, params.optionsCount))
+      );
 
-    this._clearWaveTimer();
-    this.waveTimer = gsap.delayedCall(params.time, () => {
-      this._waveTimeout();
+    if (voiceData) {
+      // Modo voz: mostrar letras e pedir "Fale todas as letras" (sem clicar)
+      this.hud.setQuestion('Fale todas as letras!');
+      this.hud.setProgress(this.currentWave, level.waves);
+      this.sound.speakText('Fale todas as letras!');
+      this.stage.showLettersForVoice(voiceData.letters, params.speed);
+
+      if (!this.speechRecognizer.isListening) {
+        this.speechRecognizer.start();
+        this.hud.setMicActive(true);
+      }
+      // Sem timer no modo voz
+    } else {
+      // Modo normal: encontre uma letra (clique)
+      const question = this.questionManager.generateQuestion(params.optionsCount);
+      if (!question) return;
+
+      this.hud.setQuestion(question.prompt);
+      this.hud.setProgress(this.currentWave, level.waves);
+      this.sound.speakText(question.prompt);
+      this.stage.showLetters(question, params.speed);
+
+      this._clearWaveTimer();
+      this.waveTimer = gsap.delayedCall(params.time, () => {
+        this._waveTimeout();
+      });
+    }
+  }
+
+  _handleVoiceWaveComplete() {
+    this.stars++;
+    this.hud.setStars(this.stars);
+    this.hud.showFeedback('Muito bem! ⭐', 0x2ECC71);
+    this.mascot.celebrate();
+
+    gsap.delayedCall(1.5, () => {
+      this.currentWave++;
+      this._startWave();
     });
   }
 

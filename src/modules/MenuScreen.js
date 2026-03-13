@@ -41,12 +41,16 @@ export class MenuScreen extends Container {
       });
     }
 
+    const scale = Math.min(1, this.stageWidth / 800);
+    const titleFontSize = Math.round(Math.max(32, 64 * scale));
+    const titleY = this.stageHeight * 0.25;
+
     // Title
     this.title = new Text({
       text: '🦁 ABC Safari',
       style: {
         fontFamily: 'Arial Rounded MT Bold, Comic Sans MS, Arial',
-        fontSize: 64,
+        fontSize: titleFontSize,
         fontWeight: 'bold',
         fill: 0xFFD700,
         dropShadow: {
@@ -58,7 +62,7 @@ export class MenuScreen extends Container {
     });
     this.title.anchor.set(0.5);
     this.title.x = this.stageWidth / 2;
-    this.title.y = 150;
+    this.title.y = titleY;
     this.addChild(this.title);
 
     gsap.to(this.title.scale, {
@@ -69,23 +73,28 @@ export class MenuScreen extends Container {
       ease: 'sine.inOut'
     });
 
+    const subtitleFontSize = Math.max(16, Math.round(24 * scale));
+    const subtitleY = this.stageHeight * 0.37;
     // Subtitle
     const subtitle = new Text({
       text: 'Aprenda as letras brincando!',
       style: {
         fontFamily: 'Comic Sans MS, Arial',
-        fontSize: 24,
+        fontSize: subtitleFontSize,
         fill: 0xBBBBBB
       }
     });
     subtitle.anchor.set(0.5);
     subtitle.x = this.stageWidth / 2;
-    subtitle.y = 220;
+    subtitle.y = subtitleY;
     this.addChild(subtitle);
 
-    // Play button
-    const playBtn = this._createButton('🎮 Jogar!', this.stageWidth / 2, 340, 0x27AE60);
-    playBtn.on('pointerdown', () => {
+    const playY = this.stageHeight * 0.57;
+    const micY = this.stageHeight * 0.7;
+    // Play button (unlock áudio no primeiro clique para o navegador permitir som e microfone)
+    const playBtn = this._createButton('🎮 Jogar!', this.stageWidth / 2, playY, 0x27AE60, scale);
+    playBtn.on('pointerdown', async () => {
+      await this.sound.unlock();
       this.sound.play('click');
       gsap.killTweensOf(this.title.scale);
       if (this.onPlay) this.onPlay();
@@ -93,49 +102,57 @@ export class MenuScreen extends Container {
     this.addChild(playBtn);
 
     // Microphone button
-    this.micBtn = this._createButton('🎤 Ativar Voz', this.stageWidth / 2, 420, 0xE74C3C);
-    this.micBtn.on('pointerdown', () => {
+    this.micBtn = this._createButton('🎤 Ativar Voz', this.stageWidth / 2, micY, 0xE74C3C, scale);
+    this.micBtn.on('pointerdown', async () => {
+      await this.sound.unlock();
       this.sound.play('click');
       if (this.onActivateVoice) this.onActivateVoice();
     });
     this.addChild(this.micBtn);
 
-    // Mascot on menu
+    const mascotMargin = Math.max(60, this.stageWidth * 0.12);
     const mascot = new Mascot();
-    mascot.x = this.stageWidth - 100;
-    mascot.y = this.stageHeight - 100;
-    mascot.scale.set(1.2);
+    mascot.x = this.stageWidth - mascotMargin;
+    mascot.y = this.stageHeight - mascotMargin;
+    mascot.scale.set(Math.min(1.2, 0.8 + scale * 0.4));
     this.addChild(mascot);
     mascot.wave();
     mascot.idle();
   }
 
   setVoiceActivated() {
+    const scale = Math.min(1, this.stageWidth / 800);
+    const w = Math.max(160, 240 * scale);
+    const h = Math.max(36, 50 * scale);
     const micLabel = this.micBtn.getChildAt(1);
     micLabel.text = '🎤 Voz Ativada!';
     this.micBtn.getChildAt(0).clear();
-    this.micBtn.getChildAt(0).roundRect(-120, -25, 240, 50, 15);
+    this.micBtn.getChildAt(0).roundRect(-w / 2, -h / 2, w, h, 15);
     this.micBtn.getChildAt(0).fill({ color: 0x2ECC71 });
   }
 
-  _createButton(text, x, y, color) {
+  _createButton(text, x, y, color, scale = 1) {
     const btn = new Container();
     btn.eventMode = 'static';
     btn.cursor = 'pointer';
     btn.x = x;
     btn.y = y;
 
+    const w = Math.max(160, 240 * scale);
+    const h = Math.max(36, 50 * scale);
+    const r = Math.max(10, 15 * scale);
     const bg = new Graphics();
-    bg.roundRect(-120, -25, 240, 50, 15);
+    bg.roundRect(-w / 2, -h / 2, w, h, r);
     bg.fill({ color });
     bg.stroke({ color: 0xFFFFFF, width: 2, alpha: 0.5 });
     btn.addChild(bg);
 
+    const fontSize = Math.max(16, Math.round(24 * scale));
     const label = new Text({
       text,
       style: {
         fontFamily: 'Arial Rounded MT Bold, Comic Sans MS, Arial',
-        fontSize: 24,
+        fontSize,
         fontWeight: 'bold',
         fill: 0xFFFFFF
       }

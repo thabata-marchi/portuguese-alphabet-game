@@ -3,8 +3,12 @@ import { gsap } from 'gsap';
 import { Character } from './Character';
 import { randomBetween, randomVibrantColor } from '../libs/utils';
 
-const BOUNDS = { x: { min: 60, max: 740 }, y: { min: 80, max: 480 } };
-const MIN_FLIGHT_DISTANCE = 150;
+function getBounds(stageWidth, stageHeight) {
+  return {
+    x: { min: stageWidth * 0.075, max: stageWidth * 0.925 },
+    y: { min: stageHeight * 0.13, max: stageHeight * 0.8 }
+  };
+}
 
 export class Letter extends Character {
   constructor(letter, stageWidth, stageHeight) {
@@ -22,28 +26,30 @@ export class Letter extends Character {
   }
 
   _createVisual() {
-    // Colored balloon behind the letter
+    const balloonRadius = Math.max(24, Math.min(40, this.stageWidth * 0.05));
     const color = randomVibrantColor();
     const balloon = new Graphics();
-    balloon.circle(0, 0, 40);
+    balloon.circle(0, 0, balloonRadius);
     balloon.fill({ color, alpha: 0.85 });
     balloon.stroke({ color: 0xFFFFFF, width: 3, alpha: 0.6 });
     this.addChild(balloon);
     this.balloon = balloon;
 
-    // Balloon string
+    const stringLen = balloonRadius + 40;
     const string = new Graphics();
-    string.moveTo(0, 40);
-    string.bezierCurveTo(5, 55, -5, 65, 0, 80);
+    string.moveTo(0, balloonRadius);
+    string.bezierCurveTo(5, balloonRadius + 15, -5, balloonRadius + 25, 0, stringLen);
     string.stroke({ color: 0x999999, width: 2 });
     this.addChild(string);
 
+    const baseFontSize = Math.max(20, Math.min(38, this.stageWidth * 0.048));
+    const letterFontSize = this.letter.length > 2 ? baseFontSize * 0.74 : baseFontSize;
     // Letter text
     const text = new Text({
       text: this.letter,
       style: {
         fontFamily: 'Arial Rounded MT Bold, Comic Sans MS, Arial',
-        fontSize: this.letter.length > 2 ? 28 : 38,
+        fontSize: letterFontSize,
         fontWeight: 'bold',
         fill: 0xFFFFFF,
         align: 'center',
@@ -58,9 +64,10 @@ export class Letter extends Character {
     this.addChild(text);
     this.textDisplay = text;
 
-    // Larger hit area for easier child clicking
+    const hitW = Math.max(80, Math.min(100, this.stageWidth * 0.12));
+    const hitH = Math.max(100, Math.min(130, hitW * 1.3));
     const hitArea = new Graphics();
-    hitArea.rect(-50, -50, 100, 130);
+    hitArea.rect(-hitW / 2, -hitW / 2, hitW, hitH);
     hitArea.fill({ color: 0xFF0000, alpha: 0 });
     this.addChild(hitArea);
   }
@@ -93,12 +100,13 @@ export class Letter extends Character {
   randomFlight() {
     if (this.state !== 'flying') return;
 
+    const bounds = getBounds(this.stageWidth, this.stageHeight);
     let destX, destY;
     do {
-      destX = randomBetween(BOUNDS.x.min, BOUNDS.x.max);
-      destY = randomBetween(BOUNDS.y.min, BOUNDS.y.max);
+      destX = randomBetween(bounds.x.min, bounds.x.max);
+      destY = randomBetween(bounds.y.min, bounds.y.max);
     } while (
-      Math.abs(destX - this.x) + Math.abs(destY - this.y) < MIN_FLIGHT_DISTANCE
+      Math.abs(destX - this.x) + Math.abs(destY - this.y) < Math.max(80, this.stageWidth * 0.19)
     );
 
     const speedMs = 3000 - (this.speedScale * 250);

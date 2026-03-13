@@ -15,8 +15,9 @@ export class SpeechRecognizer {
   }
 
   async init() {
-    // Try TensorFlow.js Speech Commands first
+    // Try TensorFlow.js Speech Commands first (precisa registrar o backend antes)
     try {
+      await import('@tensorflow/tfjs');
       const speechCommands = await import('@tensorflow-models/speech-commands');
 
       this.recognizer = speechCommands.create('BROWSER_FFT');

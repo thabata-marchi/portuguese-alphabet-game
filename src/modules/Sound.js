@@ -2,8 +2,22 @@ export class Sound {
   constructor() {
     this.muted = false;
     this.voice = null;
+    this._unlocked = false;
     this._initSounds();
     this._loadVoice();
+  }
+
+  /**
+   * Desbloqueia áudio no primeiro clique (exigência dos navegadores).
+   * Chamar em resposta a um gesto do usuário (ex.: clique em botão).
+   * @returns {Promise<void>}
+   */
+  async unlock() {
+    if (this._unlocked) return;
+    this._unlocked = true;
+    if (this.audioContext?.state === 'suspended') {
+      await this.audioContext.resume().catch(() => {});
+    }
   }
 
   _initSounds() {
@@ -39,6 +53,7 @@ export class Sound {
   }
 
   play(name) {
+    this.unlock();
     if (this.muted) return;
 
     const effect = this.soundEffects[name];
@@ -88,6 +103,7 @@ export class Sound {
   }
 
   speakText(text) {
+    this.unlock();
     if (this.muted) return;
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'pt-BR';
