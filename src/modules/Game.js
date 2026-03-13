@@ -5,6 +5,7 @@ import { Mascot } from './Mascot';
 import { MenuScreen } from './MenuScreen';
 import { GameOverScreen } from './GameOverScreen';
 import levelsData from '../data/levels.json';
+import mathLevelsData from '../data/math-levels.json';
 
 const GAME_STATES = {
   MENU: 'menu',
@@ -15,7 +16,7 @@ const GAME_STATES = {
 };
 
 export class Game {
-  constructor(app, stageWidth, stageHeight, { sound, questionManager, difficultyManager }) {
+  constructor(app, stageWidth, stageHeight, { sound, questionManager, difficultyManager, mathQuestionManager }) {
     this.app = app;
     this.stageWidth = stageWidth;
     this.stageHeight = stageHeight;
@@ -24,8 +25,10 @@ export class Game {
     this.sound = sound;
     this.questionManager = questionManager;
     this.difficultyManager = difficultyManager;
+    this.mathQuestionManager = mathQuestionManager;
     this.speechRecognizer = null;
 
+    this.gameMode = 'letters';
     this.currentLevel = 0;
     this.currentWave = 0;
     this.stars = 0;
@@ -60,6 +63,12 @@ export class Game {
     const menu = new MenuScreen(this.stageWidth, this.stageHeight, this.sound);
     menu.onPlay = async () => {
       await this.sound.unlock();
+      this.gameMode = 'letters';
+      this._startLevel(0);
+    };
+    menu.onPlayMath = async () => {
+      await this.sound.unlock();
+      this.gameMode = 'math';
       this._startLevel(0);
     };
     menu.onActivateVoice = async () => {
@@ -68,6 +77,9 @@ export class Game {
       if (this.speechRecognizer) {
         this.speechRecognizer.start();
         menu.setVoiceActivated();
+      } else {
+        menu.showHint('Use HTTPS e permita o microfone para a voz funcionar.');
+        this.sound.speakText('Acesse o jogo com HTTPS e permita o microfone para usar a voz.');
       }
     };
 
@@ -79,14 +91,17 @@ export class Game {
     this.currentLevel = levelIndex;
     this.currentWave = 0;
 
-    const level = levelsData[this.currentLevel];
+    const levels = this.gameMode === 'math' ? mathLevelsData : levelsData;
+    const level = levels[this.currentLevel];
     if (!level) {
       this._showGameOver(true);
       return;
     }
 
-    this.questionManager.setContent(level.contentKey);
-    this.difficultyManager.resetForLevel(levelIndex);
+    if (this.gameMode === 'letters') {
+      this.questionManager.setContent(level.contentKey);
+      this.difficultyManager.resetForLevel(levelIndex);
+    }
 
     // Create the game stage
     this.stage = new Stage(this.stageWidth, this.stageHeight, this.sound);
@@ -100,6 +115,7 @@ export class Game {
     this.hud.setLevel(level.id, level.title);
     this.hud.setProgress(0, level.waves);
     if (this.speechRecognizer?.isListening) this.hud.setMicActive(true);
+    this.hud.micButton.visible = this.gameMode === 'letters';
     this.hud.micButton.on('pointerdown', () => this._toggleMic());
     this.app.stage.addChild(this.hud);
 
@@ -124,7 +140,8 @@ export class Game {
   }
 
   _startWave() {
-    const level = levelsData[this.currentLevel];
+    const levels = this.gameMode === 'math' ? mathLevelsData : levelsData;
+    const level = levels[this.currentLevel];
     if (this.currentWave >= level.waves) {
       this._levelComplete();
       return;
@@ -135,7 +152,20 @@ export class Game {
     this.waveStartTime = Date.now();
     this.difficultyManager.setAttempts(0);
 
-    const params = this.difficultyManager.gameParams;
+    const params = this.gameMode === 'math'
+      ? { optionsCount: level.optionsCount, speed: level.speed, time: level.time }
+      : this.difficultyManager.gameParams;
+
+    if (this.gameMode === 'math') {
+      const question = this.mathQuestionManager.generateQuestion(level.maxSum, params.optionsCount);
+      this.hud.setQuestion(question.prompt);
+      this.hud.setProgress(this.currentWave, level.waves);
+      this.sound.speakText(question.prompt);
+      this.stage.showLetters(question, params.speed);
+      this._clearWaveTimer();
+      this.waveTimer = gsap.delayedCall(params.time, () => this._waveTimeout());
+      return;
+    }
 
     const voiceData =
       this.speechRecognizer &&
@@ -144,13 +174,10 @@ export class Game {
       );
 
     if (voiceData) {
-      // Modo voz: mostrar letras e pedir "Fale todas as letras" (sem clicar)
       this.hud.setQuestion('Fale todas as letras!');
       this.hud.setProgress(this.currentWave, level.waves);
       this.sound.speakText('Fale todas as letras!');
       this.stage.showLettersForVoice(voiceData.letters, params.speed);
-
-      // Sempre reiniciar o microfone na rodada (navegador pode ter parado no onend)
       this.speechRecognizer.stop();
       setTimeout(() => {
         if (this.speechRecognizer && this.state === GAME_STATES.PLAYING) {
@@ -158,21 +185,15 @@ export class Game {
           this.hud.setMicActive(true);
         }
       }, 120);
-      // Sem timer no modo voz
     } else {
-      // Modo normal: encontre uma letra (clique)
       const question = this.questionManager.generateQuestion(params.optionsCount);
       if (!question) return;
-
       this.hud.setQuestion(question.prompt);
       this.hud.setProgress(this.currentWave, level.waves);
       this.sound.speakText(question.prompt);
       this.stage.showLetters(question, params.speed);
-
       this._clearWaveTimer();
-      this.waveTimer = gsap.delayedCall(params.time, () => {
-        this._waveTimeout();
-      });
+      this.waveTimer = gsap.delayedCall(params.time, () => this._waveTimeout());
     }
   }
 
@@ -234,7 +255,8 @@ export class Game {
     this.state = GAME_STATES.LEVEL_COMPLETE;
     this.stage.clearLetters();
 
-    const level = levelsData[this.currentLevel];
+    const levels = this.gameMode === 'math' ? mathLevelsData : levelsData;
+    const level = levels[this.currentLevel];
 
     this.sound.play('levelUp');
     this.hud.showFeedback(`${level.title} Completo!`, 0xFFD700);
@@ -243,7 +265,7 @@ export class Game {
     this.difficultyManager.recordLevelComplete();
 
     gsap.delayedCall(3, () => {
-      if (this.currentLevel + 1 < levelsData.length) {
+      if (this.currentLevel + 1 < levels.length) {
         this._startLevel(this.currentLevel + 1);
       } else {
         this._showGameOver(true);

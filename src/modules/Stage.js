@@ -151,9 +151,16 @@ export class Stage extends Container {
     const key = spokenLetter.toUpperCase();
 
     if (this.voiceMode) {
-      const matchingLetter = this.letters.find(
+      let matchingLetter = this.letters.find(
         l => l.letter.toUpperCase() === key && !this.lettersSpoken.has(l.letter.toUpperCase())
       );
+      if (!matchingLetter && (key === 'E' || key === 'I')) {
+        const confusable = key === 'E' ? 'I' : 'E';
+        matchingLetter = this.letters.find(
+          l => l.letter.toUpperCase() === confusable && !this.lettersSpoken.has(confusable)
+        );
+        if (matchingLetter) key = confusable;
+      }
       if (matchingLetter) {
         this.lettersSpoken.add(key);
         this.sound.play('pop');

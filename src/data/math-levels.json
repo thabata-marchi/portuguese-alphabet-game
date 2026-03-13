@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "title": "Somas até 5",
+    "maxSum": 5,
+    "waves": 5,
+    "optionsCount": 3,
+    "speed": 4,
+    "time": 15
+  },
+  {
+    "id": 2,
+    "title": "Somas até 10",
+    "maxSum": 10,
+    "waves": 6,
+    "optionsCount": 4,
+    "speed": 4,
+    "time": 14
+  },
+  {
+    "id": 3,
+    "title": "Somas até 20",
+    "maxSum": 20,
+    "waves": 6,
+    "optionsCount": 4,
+    "speed": 5,
+    "time": 12
+  }
+]

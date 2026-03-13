@@ -15,11 +15,15 @@ export class SpeechRecognizer {
   }
 
   async init() {
+    // Em produção o microfone exige HTTPS (contexto seguro)
+    if (typeof window !== 'undefined' && !window.isSecureContext) {
+      console.warn('Voice: requires HTTPS (secure context)');
+      return false;
+    }
     // Preferir Web Speech API: reconhece letras em pt-BR ("A", "B", "C").
-    // TF.js Speech Commands só tem ~20 palavras em inglês (yes, no, up...) e não reconhece letras.
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       if (this._initWebSpeechAPI()) {
-        console.log('Voice: Web Speech API (pt-BR, letras)');
+        console.log('Voice: Web Speech API (pt-BR)');
         return true;
       }
     }
@@ -44,17 +48,19 @@ export class SpeechRecognizer {
       this.webRecognizer.lang = 'pt-BR';
       this.webRecognizer.continuous = true;
       this.webRecognizer.interimResults = false;
+      this.webRecognizer.maxAlternatives = 3;
 
       this.webRecognizer.onresult = (event) => {
         const last = event.results[event.results.length - 1];
         if (last.isFinal) {
-          const transcript = last[0].transcript.trim().toUpperCase();
-          const confidence = last[0].confidence;
-
-          // Extract the first letter or word
-          const letter = this._extractLetter(transcript);
-          if (letter && this.onResult) {
-            this.onResult(letter, confidence);
+          for (let i = 0; i < last.length; i++) {
+            const transcript = last[i].transcript.trim().toUpperCase();
+            const confidence = last[i].confidence;
+            const letter = this._extractLetter(transcript);
+            if (letter && this.onResult) {
+              this.onResult(letter, confidence);
+              return;
+            }
           }
         }
       };
@@ -85,7 +91,7 @@ export class SpeechRecognizer {
   }
 
   _extractLetter(transcript) {
-    // Normaliza acentos (á→a, ç→c) para comparar com as letras do jogo
+    if (!transcript || typeof transcript !== 'string') return null;
     const normalized = transcript
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -93,11 +99,11 @@ export class SpeechRecognizer {
     const cleaned = normalized.replace(/[^A-Z]/g, '');
 
     if (cleaned.length === 0) return null;
-
     if (cleaned.length === 1) return cleaned;
     if (cleaned.length === 2) return cleaned;
-
-    return cleaned;
+    // "LETRA A" vira "LETRAA" -> pega a última letra (o usuário disse "letra A")
+    if (cleaned.length > 2) return cleaned.charAt(cleaned.length - 1);
+    return null;
   }
 
   async start() {

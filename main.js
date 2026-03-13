@@ -2,6 +2,7 @@ import { Application } from 'pixi.js';
 import { Game } from './src/modules/Game';
 import { Sound } from './src/modules/Sound';
 import { QuestionManager } from './src/modules/QuestionManager';
+import { MathQuestionManager } from './src/modules/MathQuestionManager';
 import { DifficultyManager } from './src/modules/DifficultyManager';
 
 const DESKTOP_WIDTH = 800;
@@ -52,9 +53,9 @@ async function init() {
   window.addEventListener('orientationchange', () => setTimeout(resize, 100));
   resize();
 
-  // Dependency injection
   const sound = new Sound();
   const questionManager = new QuestionManager();
+  const mathQuestionManager = new MathQuestionManager();
 
   let rlAgent = null;
   try {
@@ -70,7 +71,8 @@ async function init() {
   const game = new Game(app, STAGE_WIDTH, STAGE_HEIGHT, {
     sound,
     questionManager,
-    difficultyManager
+    difficultyManager,
+    mathQuestionManager
   });
   game.start();
 }

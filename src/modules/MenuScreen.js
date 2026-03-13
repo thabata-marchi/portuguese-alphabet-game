@@ -10,6 +10,7 @@ export class MenuScreen extends Container {
     this.sound = sound;
 
     this.onPlay = null;
+    this.onPlayMath = null;
     this.onActivateVoice = null;
 
     this._create();
@@ -89,9 +90,9 @@ export class MenuScreen extends Container {
     subtitle.y = subtitleY;
     this.addChild(subtitle);
 
-    const playY = this.stageHeight * 0.57;
-    const micY = this.stageHeight * 0.7;
-    // Play button (unlock áudio no primeiro clique para o navegador permitir som e microfone)
+    const playY = this.stageHeight * 0.52;
+    const mathY = this.stageHeight * 0.62;
+    const micY = this.stageHeight * 0.72;
     const playBtn = this._createButton('🎮 Jogar!', this.stageWidth / 2, playY, 0x27AE60, scale);
     playBtn.on('pointerdown', async () => {
       await this.sound.unlock();
@@ -101,7 +102,15 @@ export class MenuScreen extends Container {
     });
     this.addChild(playBtn);
 
-    // Microphone button
+    const mathBtn = this._createButton('🔢 Matemática', this.stageWidth / 2, mathY, 0x9B59B6, scale);
+    mathBtn.on('pointerdown', async () => {
+      await this.sound.unlock();
+      this.sound.play('click');
+      gsap.killTweensOf(this.title.scale);
+      if (this.onPlayMath) this.onPlayMath();
+    });
+    this.addChild(mathBtn);
+
     this.micBtn = this._createButton('🎤 Ativar Voz', this.stageWidth / 2, micY, 0xE74C3C, scale);
     this.micBtn.on('pointerdown', async () => {
       await this.sound.unlock();
@@ -129,6 +138,35 @@ export class MenuScreen extends Container {
     this.micBtn.getChildAt(0).clear();
     this.micBtn.getChildAt(0).roundRect(-w / 2, -h / 2, w, h, 15);
     this.micBtn.getChildAt(0).fill({ color: 0x2ECC71 });
+  }
+
+  showHint(message) {
+    if (this._hintText) {
+      this._hintText.destroy();
+      gsap.killTweensOf(this._hintText);
+    }
+    const scale = Math.min(1, this.stageWidth / 800);
+    const micY = this.stageHeight * 0.7;
+    this._hintText = new Text({
+      text: message,
+      style: {
+        fontFamily: 'Comic Sans MS, Arial',
+        fontSize: Math.max(12, Math.round(16 * scale)),
+        fill: 0xF39C12,
+        wordWrap: true,
+        wordWrapWidth: this.stageWidth - 80
+      }
+    });
+    this._hintText.anchor.set(0.5);
+    this._hintText.x = this.stageWidth / 2;
+    this._hintText.y = micY + 45;
+    this.addChild(this._hintText);
+    gsap.delayedCall(5, () => {
+      const hint = this._hintText;
+      if (hint && hint.parent) {
+        gsap.to(hint, { alpha: 0, duration: 0.3, onComplete: () => { hint.destroy(); this._hintText = null; } });
+      }
+    });
   }
 
   _createButton(text, x, y, color, scale = 1) {
