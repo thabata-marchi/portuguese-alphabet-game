@@ -1,0 +1,76 @@
+{
+  "levels": {
+    "letras_vogais": {
+      "title": "Vogais",
+      "description": "Aprenda as vogais!",
+      "items": ["A", "E", "I", "O", "U"],
+      "prompts": {
+        "A": "Encontre a letra A!",
+        "E": "Encontre a letra E!",
+        "I": "Encontre a letra I!",
+        "O": "Encontre a letra O!",
+        "U": "Encontre a letra U!"
+      }
+    },
+    "letras_consoantes_1": {
+      "title": "Consoantes I",
+      "description": "B, C, D, F, G",
+      "items": ["B", "C", "D", "F", "G"],
+      "prompts": {
+        "B": "Encontre a letra B!",
+        "C": "Encontre a letra C!",
+        "D": "Encontre a letra D!",
+        "F": "Encontre a letra F!",
+        "G": "Encontre a letra G!"
+      }
+    },
+    "letras_consoantes_2": {
+      "title": "Consoantes II",
+      "description": "H, J, K, L, M",
+      "items": ["H", "J", "K", "L", "M"],
+      "prompts": {
+        "H": "Encontre a letra H!",
+        "J": "Encontre a letra J!",
+        "K": "Encontre a letra K!",
+        "L": "Encontre a letra L!",
+        "M": "Encontre a letra M!"
+      }
+    },
+    "letras_consoantes_3": {
+      "title": "Consoantes III",
+      "description": "N, P, Q, R, S",
+      "items": ["N", "P", "Q", "R", "S"],
+      "prompts": {
+        "N": "Encontre a letra N!",
+        "P": "Encontre a letra P!",
+        "Q": "Encontre a letra Q!",
+        "R": "Encontre a letra R!",
+        "S": "Encontre a letra S!"
+      }
+    },
+    "letras_consoantes_4": {
+      "title": "Consoantes IV",
+      "description": "T, V, W, X, Z",
+      "items": ["T", "V", "W", "X", "Z"],
+      "prompts": {
+        "T": "Encontre a letra T!",
+        "V": "Encontre a letra V!",
+        "W": "Encontre a letra W!",
+        "X": "Encontre a letra X!",
+        "Z": "Encontre a letra Z!"
+      }
+    },
+    "silabas_simples": {
+      "title": "Sílabas Simples",
+      "description": "Aprenda as sílabas!",
+      "items": ["BA", "BE", "BI", "BO", "BU", "CA", "CO", "DA", "DE", "DO", "FA", "FE", "GA", "GO", "LA", "LE", "LI", "MA", "ME", "MI", "MO", "NA", "NE", "NI", "NO", "PA", "PE", "PI", "PO", "RA", "RE", "RI", "RO", "SA", "SE", "SI", "SO", "TA", "TE", "TI", "TO", "VA", "VE", "VI"],
+      "prompts": {}
+    },
+    "palavras_simples": {
+      "title": "Palavras",
+      "description": "Leia as palavras!",
+      "items": ["BOLA", "CASA", "DADO", "FADA", "GATO", "LAGO", "MAPA", "NAVE", "PATO", "RATO", "SAPO", "TATU", "VACA", "LOBO", "PIPA", "RODA", "MESA", "LATA", "BICO", "FOGO"],
+      "prompts": {}
+    }
+  }
+}
