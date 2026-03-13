@@ -1,5 +1,7 @@
 # ABC Safari
 
+![ABC Safari Demo](docs/demo/abc-safari.gif)
+
 Educational game focused on **learning the Portuguese language** and early literacy.  
 It combines **reinforcement learning** and **voice recognition** to teach the alphabet in an interactive and fun safari-themed environment.
 
