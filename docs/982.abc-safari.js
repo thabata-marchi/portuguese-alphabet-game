@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkabc_safari=self.webpackChunkabc_safari||[]).push([[982],{9982(e){e.exports=JSON.parse('[{"id":1,"title":"Colors","contentKey":"colors_basic","waves":5,"optionsCount":3,"speed":3,"time":15,"pointsPerCorrect":10},{"id":2,"title":"More colors","contentKey":"colors_extended","waves":6,"optionsCount":4,"speed":4,"time":14,"pointsPerCorrect":15}]')}}]);

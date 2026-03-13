@@ -17,9 +17,9 @@ module.exports = (env, argv) => {
   }
 
   return {
-  entry: './main.js',
+  entry: { main: './main.js' },
   output: {
-    filename: 'abc-safari.js',
+    filename: '[name].abc-safari.js',
     chunkFilename: '[name].abc-safari.js',
     path: path.resolve(__dirname, 'dist'),
     clean: true
